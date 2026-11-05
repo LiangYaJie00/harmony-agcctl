@@ -1,0 +1,5 @@
+{
+  "key_id": "<key_id>",
+  "sub_account": "<sub_account>",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n<private_key>\n-----END PRIVATE KEY-----\n"
+}

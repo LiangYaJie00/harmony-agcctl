@@ -80,29 +80,18 @@ flowchart LR
 
 ## 4. 打包机上的存在形式
 
-`agcctl` 和节点脚本都是版本化安装目录，不是开发仓库，也不是散落的几个无版本文件。
+打包机只保留一份 `harmony-release-flow` 检出。更新时在没有节点命令正在运行的情况下 `git pull`，再重装虚拟环境。不按版本号并列放多份目录。`agcctl` 是这个仓库锁定的依赖，和节点命令装进同一个 `bin/`。
 
 ```text
-/opt/qianshou-harmony/release-tools/agcctl/1.0.0/
-├── bin/agcctl
-├── venv/
-├── app/
-└── schemas/
-
-/opt/qianshou-harmony/release-tools/publish-nodes/1.0.0/
-├── bin/upload-agc
-├── bin/engineering-check
-├── bin/submit-test
-├── bin/submit-review
-├── bin/review-status
-├── bin/release-status
-├── bin/promote-full
-├── bin/stop-test
-└── bin/delete-test
-
-/etc/qianshou-harmony/agc/
-├── config.yaml
-└── private.json
+/opt/qianshou-harmony/release-tools/harmony-release-flow/
+├── config/
+│   ├── config.yaml
+│   └── private.json
+├── .venv/bin/
+│   ├── agcctl
+│   ├── upload-agc
+│   └── engineering-check
+└── src/
 
 /srv/qianshou-harmony/artifacts/<taskId>/
 /run/qianshou-harmony/agc/<taskId>/<operationKey>/
@@ -110,14 +99,14 @@ flowchart LR
 
 约定：
 
-1. 生产调用使用版本目录的绝对路径。`current` 软链只给新任务选默认版本，运行中的任务不跟随软链切换。
-2. 安装包来自发布构建，包含 `agcctl` 的虚拟环境和依赖。不包含 `.git`、测试、本地 `.venv`、开发文档和开发机上的 `config.yaml`。
-3. `publish-nodes` 是独立小项目，和 `agcctl` 并列安装。多个入口共享同一套「启动 agcctl、读写任务 JSON、映射退出码」的代码。
+1. 节点命令通过自己的真实路径找到同一目录里的 `agcctl`。仓库里不写打包机绝对路径。
+2. 真实 `config.yaml` 和 `private.json` 放在检出目录的 `config/`，不提交到 Git。`git pull` 不覆盖它们。
+3. `harmony-release-flow` 是独立仓库。多个入口共享同一套「启动 agcctl、读写任务 JSON、映射退出码」的代码。
 4. `private.json` 权限 `0600`，只有发布用户可读。节点脚本不保存私钥，不在命令行参数里传递私钥、JWT 或上传签名 URL。
 5. 节点脚本以参数数组启动 `agcctl`，不经过 Shell 拼接。请求文件权限 `0600`，调用结束后删除。
 6. 构建 Runner 用户不能读取 Service Account。节点脚本和 `agcctl` 使用发布用户。
 
-源代码放在 `harmony-agcctl` 仓库内、与 `src/agc_cli/` 并列的节点脚本目录，不放进 `qianshou-harmony/scripts/package/`。
+源代码在 `harmony-release-flow`，不放进 `harmony-agcctl`，也不放进 `qianshou-harmony/scripts/package/`。
 
 ## 5. 任务上下文
 
@@ -175,21 +164,19 @@ flowchart LR
 ### 6.1 中台如何启动节点脚本
 
 ```text
-/opt/qianshou-harmony/release-tools/publish-nodes/1.0.0/bin/upload-agc \
-  --context /srv/qianshou-harmony/operations/<taskId>/context.json \
-  --agcctl /opt/qianshou-harmony/release-tools/agcctl/1.0.0/bin/agcctl \
-  --config /etc/qianshou-harmony/agc/config.yaml
+/opt/qianshou-harmony/release-tools/harmony-release-flow/.venv/bin/upload-agc \
+  --context /srv/qianshou-harmony/operations/<taskId>/context.json
 ```
 
-`--agcctl` 和 `--config` 使用绝对路径。脚本把 `agcctl` 的 stdout JSON 解析后，把更新过的上下文打到自己的 stdout，stderr 只写脱敏日志。
+节点命令默认读取检出目录里的 `config/config.yaml`。`--agcctl` 只留给测试注入假命令。脚本把 `agcctl` 的 stdout JSON 解析后，把更新过的上下文打到自己的 stdout，stderr 只写脱敏日志。
 
 ### 6.2 节点脚本如何启动 agcctl
 
 ```text
-/opt/qianshou-harmony/release-tools/agcctl/1.0.0/bin/agcctl \
+/opt/qianshou-harmony/release-tools/harmony-release-flow/.venv/bin/agcctl \
   upload package \
   --request-file /run/qianshou-harmony/agc/<taskId>/<operationKey>/request.json \
-  --config /etc/qianshou-harmony/agc/config.yaml
+  --config /opt/qianshou-harmony/release-tools/harmony-release-flow/config/config.yaml
 ```
 
 `operationKey` 在一个任务内按操作类型唯一：
@@ -345,4 +332,4 @@ QA 在页面上暂停测试时，不调用 `stop-test`。
 7. `publish submit` 和 `publish promote-full` 不会被上传或 AppTest 脚本间接调用。
 8. 退出码 `30` 时不会原样重放创建、提交、停止、删除或转全网。
 9. 审核和灰度脚本在未完成时返回 `PENDING`，不会因为超过 20 分钟而失败。
-10. 打包机上的 `agcctl` 是版本化发布目录；节点脚本在并列的 `publish-nodes/<version>/bin/` 下。私钥只在 `/etc/qianshou-harmony/agc/private.json`。
+10. 打包机只保留一份 `harmony-release-flow` 检出。`agcctl` 装在同一虚拟环境。配置和私钥在检出目录的 `config/`，私钥权限 `0600`。
