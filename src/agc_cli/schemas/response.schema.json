@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qianshou.local/agcctl/response.schema.json",
+  "title": "agcctl response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "success",
+    "operation",
+    "operationKey",
+    "toolVersion",
+    "externalIds",
+    "remoteState",
+    "requestId",
+    "retryClass",
+    "error",
+    "durationMs",
+    "data"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "success": { "type": "boolean" },
+    "operation": { "type": "string", "minLength": 1 },
+    "operationKey": { "type": "string", "minLength": 1 },
+    "toolVersion": { "type": "string", "minLength": 1 },
+    "externalIds": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "remoteState": { "type": "object" },
+    "requestId": { "type": ["string", "null"] },
+    "retryClass": {
+      "enum": [
+        "NONE",
+        "SAFE_RETRY",
+        "NON_RETRYABLE",
+        "RECONCILE_FIRST",
+        "LOCAL_PRECONDITION_FAILED",
+        "TOOL_INTERNAL_ERROR"
+      ]
+    },
+    "error": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["category", "code", "message", "detail"],
+          "properties": {
+            "category": { "type": "string", "minLength": 1 },
+            "code": { "type": "string", "minLength": 1 },
+            "message": { "type": "string", "minLength": 1 },
+            "detail": { "type": ["string", "null"] }
+          }
+        }
+      ]
+    },
+    "durationMs": { "type": "integer", "minimum": 0 },
+    "data": { "type": "object" }
+  }
+}

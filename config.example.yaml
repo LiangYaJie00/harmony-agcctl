@@ -1,0 +1,17 @@
+apiHost: https://connect-api.cloud.huawei.com
+appId: "000000000"
+bundleName: com.qianshou.billionclub
+defaultLanguage: zh-CN
+testReleaseType: 6
+testType: 3
+connectTimeoutSeconds: 10
+queryTimeoutSeconds: 30
+uploadTimeoutSeconds: 1200
+privateKeyFile: /etc/qianshou-harmony/agc/private.json
+artifactRoot: /srv/qianshou-harmony/artifacts
+logDir: /var/log/qianshou-harmony/agc
+runDir: /run/qianshou-harmony/agc
+releaseUser: harmony-release
+requireManifest: false
+maxClockSkewSeconds: 60
+notifyPath: /api/publish/v2/test/user/action/notify
