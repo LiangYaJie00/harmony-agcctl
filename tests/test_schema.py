@@ -42,6 +42,26 @@ def test_example_config_loads() -> None:
     assert settings.privateKeyFile == Path("/etc/qianshou-harmony/agc/private.json")
 
 
+def test_config_ignores_release_flow_fields(tmp_path) -> None:
+    path = tmp_path / "config.yaml"
+    path.write_text(
+        "apiHost: https://connect-api.cloud.huawei.com\n"
+        "appId: '1'\n"
+        "bundleName: a\n"
+        "privateKeyFile: /tmp/k\n"
+        "artifactRoot: /tmp/a\n"
+        "logDir: /tmp/l\n"
+        "runDir: /tmp/r\n"
+        "qaGroupId: group-1\n"
+        "qaGroupName: QA\n"
+        "testWindowDays: 7\n",
+        encoding="utf-8",
+    )
+    settings = load_settings(path)
+    assert settings.appId == "1"
+    assert not hasattr(settings, "qaGroupName")
+
+
 def test_config_rejects_http_host(tmp_path) -> None:
     path = tmp_path / "config.yaml"
     path.write_text("apiHost: http://connect-api.cloud.huawei.com\nappId: '1'\nbundleName: a\nprivateKeyFile: /tmp/k\nartifactRoot: /tmp/a\nlogDir: /tmp/l\nrunDir: /tmp/r\n", encoding="utf-8")
