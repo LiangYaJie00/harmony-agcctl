@@ -14,7 +14,7 @@
 | 创建任务前检查 | 读取当前应用和版本 | `publish get-app-info` | `GET /api/publish/v3/app-info` |
 | 创建任务前检查 | 按 `versionCode` 对账。匹配顶层或 `packageList[].versionCode`，只计 `releaseType=1` 的正式版本 | `publish list-versions` | `POST /api/publish/v3/version/brief-info/list` |
 | 上传 AGC | 取上传地址并上传 APP Pack，保存 `objectId` | `upload package` | `GET /api/publish/v2/upload-url/for-obs`，再 `PUT` 返回的临时地址 |
-| 工程检测 | 新建 AppTest 草稿，保存 `versionId`。缺省 `onshelfSelfDetect=1` | `test create-version` | `POST /api/publish/v2/test/app/version` |
+| 工程检测 | 新建 AppTest 草稿，保存 `versionId`。缺省 `onshelfSelfDetect=0` | `test create-version` | `POST /api/publish/v2/test/app/version` |
 | 工程检测 | 用 `fileName + objectId` 选包，`distributeMode=2`（测试和正式上架），保存 `pkgVersion[0]` 为测试 `pkgId` | `test add-package` | `POST /api/publish/v2/test/version/pkg` |
 | 工程检测 | 查测试包解析。`successStatus`：`0` 通过，`1` 处理中，`2` 不可用 | `package compile-status` | `GET /api/publish/v3/package/compile/status` |
 | 提交测试版本 | 查 QA 群组。`groupType` 缺省为 `1`（内部群组），`0` 为外部群组 | `test list-groups` | `GET /api/app-test/v1/test-group/list?groupType=` |
@@ -62,7 +62,7 @@
 - `publish get-package-info` 是 `GET /api/publish/v2/app-package-info`，查询参数只有 `packageId`，`appId` 在请求头。`PUT /api/publish/v3/app-package-info` 只用于 `publish update-package`。
 - `publish list-versions` 用顶层 `versionCode` 或 `packageList[].versionCode` 匹配，只把 `releaseType` 为 `1` 或未返回该字段的记录计入候选。测试版本 `releaseType=6` 即使版本码相同也不写入 `publishVersionId`。`data.versions` 仍是完整列表。
 - `test add-package` 固定提交 `distributeMode=2`。使用场景为「仅测试」的旧 `objectId` 不能拿来做正式关联。
-- `test create-version` 缺省 `onshelfSelfDetect=1`，只影响这次新建的测试版本。
+- `test create-version` 缺省 `onshelfSelfDetect=0`，只影响这次新建的测试版本。需要上架自检时在请求里传 `1`。
 - `test list-groups` 缺省 `groupType=1`。外部群组里也可以出现名称带「内测」的群组。
 - `test list-testers` 把 `groupId` 放在请求头，`current` 和 `pageSize` 放在查询参数。
 - `test notify` 使用配置中的 `/api/publish/v2/test/user/action/notify`。

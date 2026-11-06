@@ -113,7 +113,7 @@ agcctl doctor --config config.yaml --request-file doctor.json
 
 ### 工程检测
 
-`agcctl test create-version` 新建测试草稿。`request` 可带 `testDesc`。保存 `externalIds.versionId`，这是测试 `versionId`。
+`agcctl test create-version` 新建测试草稿。`request` 可带 `testDesc`。不传 `onshelfSelfDetect` 时发送 `0`，这次测试版本不做上架自检；需要自检时传 `1`。保存 `externalIds.versionId`，这是测试 `versionId`。
 
 `agcctl test add-package` 把已上传的包选进这个草稿。`request` 只带 `fileName` 和 `objectId`，不包含安装包本身。保存 `externalIds.pkgId`，这是测试 `pkgId`。
 

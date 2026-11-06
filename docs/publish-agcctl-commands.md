@@ -124,7 +124,7 @@ agcctl upload package --config <config.yaml> --request-file <upload-package.json
 
 ### 4.1 新建测试版本
 
-`releaseType=6` 和 `testType=3` 来自配置，请求里即使写入也会被覆盖。查询参数会带上 `appId`。`testDesc` 为 1 到 50 个字符。不传 `onshelfSelfDetect` 时默认为 `1`，开启上架自检；明确关闭时传 `0`。这个开关只作用于本次新建的测试版本，不会补检已经上传的软件包。同一应用同时只能有一个进行中的自检任务。
+`releaseType=6` 和 `testType=3` 来自配置，请求里即使写入也会被覆盖。查询参数会带上 `appId`。`testDesc` 为 1 到 50 个字符。不传 `onshelfSelfDetect` 时默认为 `0`，只提交邀请测试、不做这次上架自检；需要按正式上架标准自检时传 `1`。这个开关只作用于本次新建的测试版本，不会补检已经上传的软件包。同一应用同时只能有一个进行中的自检任务。
 
 `operationKey`：`<taskId>:create-version`
 

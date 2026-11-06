@@ -92,7 +92,7 @@
 .venv/bin/agcctl test create-version --config config.yaml --request-file <请求目录>/create-version.json
 ```
 
-实际发送 `POST /api/publish/v2/test/app/version?appId=`。`releaseType=6`、`testType=3` 来自配置。未写 `onshelfSelfDetect` 时命令发送 `1`。这个开关只作用于新建的测试版本。保存 `externalIds.versionId`，记为 `<testVersionId>`。
+实际发送 `POST /api/publish/v2/test/app/version?appId=`。`releaseType=6`、`testType=3` 来自配置。未写 `onshelfSelfDetect` 时命令发送 `0`。这个开关只作用于新建的测试版本。保存 `externalIds.versionId`，记为 `<testVersionId>`。
 
 ### test add-package
 

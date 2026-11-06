@@ -18,12 +18,12 @@ def create_version(settings: Settings, request: dict[str, Any], session: AgcSess
     test_desc = body.get("testDesc")
     if not isinstance(test_desc, str) or not 1 <= len(test_desc) <= 50:
         raise CommandError(ExitCode.LOCAL_PRECONDITION_FAILED, "TEST_DESC_INVALID", "testDesc 必须是 1 到 50 个字符")
-    self_detect = body.get("onshelfSelfDetect", 1)
+    self_detect = body.get("onshelfSelfDetect", 0)
     if isinstance(self_detect, bool) or self_detect not in {0, 1}:
         raise CommandError(
             ExitCode.LOCAL_PRECONDITION_FAILED,
             "SELF_DETECT_INVALID",
-            "onshelfSelfDetect 只能是 0 或 1，缺省开启上架自检",
+            "onshelfSelfDetect 只能是 0 或 1，缺省不开启上架自检",
         )
     exchange = session.call(
         "POST",

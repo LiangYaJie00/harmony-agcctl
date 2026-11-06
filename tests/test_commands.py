@@ -168,7 +168,7 @@ def test_create_version_forces_test_type_and_timeout_is_reconcile(tmp_path, caps
     )
     assert code == ExitCode.RECONCILE_FIRST
     sent = json.loads(transport.requests[0].content)
-    assert sent == {"releaseType": 6, "testType": 3, "testDesc": "local verify", "onshelfSelfDetect": 1}
+    assert sent == {"releaseType": 6, "testType": 3, "testDesc": "local verify", "onshelfSelfDetect": 0}
     assert "appId=123456789" in str(transport.requests[0].url)
     assert len(transport.requests) == 1
     assert response["retryClass"] == "RECONCILE_FIRST"
