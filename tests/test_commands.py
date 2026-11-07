@@ -512,6 +512,68 @@ def test_promote_full_sends_only_publish_version(tmp_path, capsys) -> None:
     assert response["externalIds"]["publishVersionId"] == "pub-ver-1"
 
 
+def test_cancel_review_sends_publish_version(tmp_path, capsys) -> None:
+    transport = ScriptedTransport([_json_response(200, {"ret": {"code": 0, "msg": "success"}})])
+    code, response, _stderr, transport = _run(
+        tmp_path,
+        capsys,
+        ["publish", "cancel-review"],
+        transport,
+        _request("PUBLISH_CANCEL_REVIEW", {"publishVersionId": "pub-ver-1"}),
+    )
+    assert code == ExitCode.SUCCESS
+    sent = transport.requests[0]
+    assert sent.method == "PUT"
+    assert sent.url.path == "/api/publish/v3/version/on-shelf/cancel"
+    assert json.loads(sent.content) == {"versionId": "pub-ver-1"}
+    assert response["externalIds"]["publishVersionId"] == "pub-ver-1"
+    assert response["remoteState"]["cancelled"] is True
+
+
+def test_cancel_review_rejects_other_ids(tmp_path, capsys) -> None:
+    transport = ScriptedTransport([])
+    code, response, _stderr, transport = _run(
+        tmp_path,
+        capsys,
+        ["publish", "cancel-review"],
+        transport,
+        _request("PUBLISH_CANCEL_REVIEW", {"versionId": "test-ver-1", "packageId": "pkg-1"}),
+    )
+    assert code == ExitCode.LOCAL_PRECONDITION_FAILED
+    assert response["error"]["code"] == "PUBLISH_VERSION_ID_REQUIRED"
+    assert response["error"]["detail"] is None
+    assert transport.requests == []
+
+
+def test_cancel_review_reports_known_ret_code(tmp_path, capsys) -> None:
+    transport = ScriptedTransport([_json_response(200, {"ret": {"code": 204144755, "msg": "version missing"}})])
+    code, response, _stderr, _transport = _run(
+        tmp_path,
+        capsys,
+        ["publish", "cancel-review"],
+        transport,
+        _request("PUBLISH_CANCEL_REVIEW", {"publishVersionId": "pub-ver-1"}),
+    )
+    assert code == ExitCode.NON_RETRYABLE
+    assert response["error"]["code"] == "AGC_RET_ERROR"
+    assert response["error"]["message"] == "应用版本信息不存在"
+    assert response["error"]["detail"] == "204144755: version missing"
+
+
+def test_cancel_review_reports_unknown_ret_message(tmp_path, capsys) -> None:
+    transport = ScriptedTransport([_json_response(200, {"ret": {"code": 123456, "msg": "当前状态不可撤销"}})])
+    code, response, _stderr, _transport = _run(
+        tmp_path,
+        capsys,
+        ["publish", "cancel-review"],
+        transport,
+        _request("PUBLISH_CANCEL_REVIEW", {"publishVersionId": "pub-ver-1"}),
+    )
+    assert code == ExitCode.NON_RETRYABLE
+    assert response["error"]["message"] == "当前状态不可撤销"
+    assert response["error"]["detail"] == "123456: 当前状态不可撤销"
+
+
 def test_promote_full_refuses_without_confirmation(tmp_path, capsys) -> None:
     transport = ScriptedTransport([])
     code, _response, _stderr, transport = _run(

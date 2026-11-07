@@ -1,4 +1,4 @@
-"""Publishing API commands. submit and promote-full are never chained from other commands."""
+"""Publishing API commands. submit, cancel-review, and promote-full are never chained from other commands."""
 
 from __future__ import annotations
 
@@ -62,6 +62,23 @@ def update_language(settings: Settings, request: dict[str, Any], session: AgcSes
         json_body={"lang": settings.defaultLanguage, "newFeatures": features},
     )
     return _ok(exchange, {}, {"language": settings.defaultLanguage, "releasePhase": phase})
+
+
+def cancel_review(settings: Settings, request: dict[str, Any], session: AgcSession) -> dict[str, Any]:
+    body = request["request"]
+    version_id = body.get("publishVersionId")
+    if set(body) != {"publishVersionId"} or not isinstance(version_id, str) or not version_id:
+        raise CommandError(
+            ExitCode.LOCAL_PRECONDITION_FAILED,
+            "PUBLISH_VERSION_ID_REQUIRED",
+            "撤销审核只接受正式 publishVersionId",
+        )
+    exchange = session.call(
+        "PUT",
+        "/api/publish/v3/version/on-shelf/cancel",
+        json_body={"versionId": version_id},
+    )
+    return _ok(exchange, {"publishVersionId": version_id}, {"cancelled": True})
 
 
 def submit(settings: Settings, request: dict[str, Any], session: AgcSession, *, dry_run: bool = False) -> dict[str, Any]:

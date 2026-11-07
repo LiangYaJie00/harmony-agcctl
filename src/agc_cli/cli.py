@@ -13,7 +13,16 @@ from agc_cli.api import AgcSession
 from agc_cli.config import load_settings
 from agc_cli.doctor import run_doctor
 from agc_cli.errors import EXIT_TO_RETRY_CLASS, CommandError, ExitCode
-from agc_cli.publishing import get_app_info, get_package_info, list_versions, promote_full, submit, update_language, update_package
+from agc_cli.publishing import (
+    cancel_review,
+    get_app_info,
+    get_package_info,
+    list_versions,
+    promote_full,
+    submit,
+    update_language,
+    update_package,
+)
 from agc_cli.redaction import redact_text, redact_value
 from agc_cli.schema_io import SchemaValidationError, validate_request, validate_response
 from agc_cli.testing import (
@@ -50,6 +59,7 @@ _COMMANDS: dict[tuple[str, str], tuple[str, Handler]] = {
     ("publish", "update-package"): ("PUBLISH_PACKAGE_UPDATE", update_package),
     ("publish", "update-language"): ("PUBLISH_LANGUAGE_UPDATE", update_language),
     ("publish", "submit"): ("PUBLISH_SUBMIT", submit),
+    ("publish", "cancel-review"): ("PUBLISH_CANCEL_REVIEW", cancel_review),
     ("publish", "list-versions"): ("PUBLISH_VERSION_LIST", list_versions),
     ("publish", "get-package-info"): ("PUBLISH_PACKAGE_INFO", get_package_info),
     ("publish", "promote-full"): ("PUBLISH_PROMOTE_FULL", promote_full),
@@ -144,6 +154,7 @@ def _add_command_groups(subcommands: argparse._SubParsersAction) -> None:
             "update-package",
             "update-language",
             "submit",
+            "cancel-review",
             "list-versions",
             "get-package-info",
             "promote-full",
@@ -192,7 +203,7 @@ def _run_api(args: argparse.Namespace, started: float, transport: Any) -> int:
             request_id=outcome.get("requestId"),
         )
     except CommandError as exc:
-        response = _failure(operation_key, started, exc.exit_code, exc.code, exc.message, operation)
+        response = _failure(operation_key, started, exc.exit_code, exc.code, exc.message, operation, exc.detail)
     except SchemaValidationError as exc:
         response = _failure(operation_key, started, ExitCode.LOCAL_PRECONDITION_FAILED, "SCHEMA_INVALID", exc.message, operation)
     except (ValueError, KeyError) as exc:
@@ -244,6 +255,7 @@ def _failure(
     code: str,
     message: str,
     operation: str = "DOCTOR",
+    detail: str | None = None,
 ) -> dict[str, Any]:
     data = {"checks": []} if operation == "DOCTOR" else {}
     return _response(
@@ -256,6 +268,7 @@ def _failure(
         message=message,
         remote_state={},
         data=data,
+        detail=detail,
     )
 
 
@@ -272,6 +285,7 @@ def _response(
     operation: str = "DOCTOR",
     external_ids: dict[str, str] | None = None,
     request_id: str | None = None,
+    detail: str | None = None,
 ) -> dict[str, Any]:
     error = None
     if not success:
@@ -279,7 +293,7 @@ def _response(
             "category": EXIT_TO_RETRY_CLASS[exit_code],
             "code": code,
             "message": redact_text(message),
-            "detail": None,
+            "detail": None if detail is None else redact_text(detail),
         }
     return {
         "schemaVersion": "1.0",

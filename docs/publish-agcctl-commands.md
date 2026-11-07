@@ -1,6 +1,6 @@
 # PUBLISH 流程 agcctl 命令
 
-按 PUBLISH 节点顺序调用 `agcctl`。每次只执行一条命令。变更命令成功后，把响应里的外部 ID 记下来，再执行下一条。查询命令可以重复执行。创建、提交、停止、删除和转全网在结果未知时不要原样重放。
+按 PUBLISH 节点顺序调用 `agcctl`。每次只执行一条命令。变更命令成功后，把响应里的外部 ID 记下来，再执行下一条。查询命令可以重复执行。创建、提交、撤销审核、停止、删除和转全网在结果未知时不要原样重放。
 
 打 Release 包、上传包管理平台、QA 页面确认、钉钉、develop/master PR 和 tag 不调用 `agcctl`。
 
@@ -32,6 +32,8 @@ agcctl <分组> <动作> --config <config.yaml> --request-file <请求.json>
 `appId` 必须与 `config.yaml` 的 `appId` 一致。`operationKey` 必须以 `taskId:` 开头。`toolVersion` 必须等于当前 CLI 版本。下文每个请求都使用这层外层，只写出该命令的 `request` 和要替换的 `operationKey`。
 
 标准输出是一份响应 JSON。退出码 `0` 表示成功。`10` 可重试，`20` 不可重试，`30` 表示变更请求已发出但结果未知，要先查询再决定是否继续，`40` 是本地配置、私钥或请求字段问题，`50` 是工具内部错误。
+
+华为返回 `ret.code` 不为 `0` 时，退出码是 `20`，`error.code` 仍是 `AGC_RET_ERROR`。`error.message` 是官方错误描述；文档要求按 `msg` 排查，或错误码不在表中时，使用华为返回的 `msg`。`error.detail` 是原始 `{code}: {msg}`。
 
 这五个 ID 不能混用：
 
@@ -416,11 +418,31 @@ agcctl publish get-app-info --config <config.yaml> --request-file <get-app-info.
 
 看 `remoteState.releaseState` 和 `remoteState.releasePhase`。正式版本里，`0` 是已上架，`4` 是审核中，`5` 是升级审核中，`7` 是准备提交，`11` 是撤销上架，`12` 是预审中。灰度进行中时，`data.phasePercent` 按 `currentPhaseDay` 第 1 到 7 天对应 1%、2%、5%、10%、20%、50%、100%。
 
-### 9.2 用版本码核对本次版本
+### 9.2 撤销审核
+
+全网发布处于审核中（`4`）、预审中（`12`）、升级审核中（`5`）、待上架/预约上架或申请下架时可以撤销。待上架和申请下架的数字编码没有写在这里。先用 `publish get-app-info` 核对本次正式版本，再执行本命令。命令本身不先查询。
+
+`operationKey`：`<taskId>:cancel-review`
+
+请求只带正式 `publishVersionId`，不要传测试 `versionId` 或 `packageId`。
+
+```json
+"request": {
+  "publishVersionId": "<publishVersionId>"
+}
+```
+
+```bash
+agcctl publish cancel-review --config <config.yaml> --request-file <cancel-review.json>
+```
+
+`remoteState.cancelled` 为 `true` 只表示撤销被接受。随后重复第 9.1 节确认状态。退出码 `30` 时不要用同一份请求再发一次。
+
+### 9.3 用版本码核对本次版本
 
 与第 2.2 节相同。`versionCode` 使用这次包的版本码。唯一命中时使用 `externalIds.publishVersionId`，并在 `data.versions` 里确认该记录的 `releaseType` 为 `1`、`releaseState` 属于这次提交。
 
-### 9.3 对账正式包
+### 9.4 对账正式包
 
 结果未知或需要核对正式包时执行。请求走 `GET /api/publish/v2/app-package-info`，`appId` 放请求头，查询参数只有 `packageId`。响应里的 `packageInfo` 含 `fileName`、`versionName`、`versionCode` 和 `buildVersion`。
 

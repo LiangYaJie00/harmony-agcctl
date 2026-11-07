@@ -90,7 +90,7 @@ agcctl doctor --config config.yaml --request-file doctor.json
 
 ## 命令
 
-按正式发布顺序使用。查询命令可以重复执行。创建、提交、停止、删除和转全网在退出码为 `30` 时不要原样重放。
+按正式发布顺序使用。查询命令可以重复执行。创建、提交、撤销审核、停止、删除和转全网在退出码为 `30` 时不要原样重放。
 
 ### 准备
 
@@ -154,6 +154,8 @@ agcctl publish submit --dry-run --config config.yaml --request-file submit.json
 ### 审核、上架和全量
 
 `agcctl publish get-app-info` 查看审核和发布状态。看本次正式版本时，`request.publishVersionId` 传正式 `publishVersionId`。
+
+`agcctl publish cancel-review` 撤销本次正式版本的审核。全网发布处在审核中、预审中、升级审核中、待上架/预约上架或申请下架时才可以撤销。`request` 只带正式 `publishVersionId`。`remoteState.cancelled` 为 `true` 只表示撤销被接受，之后继续用 `publish get-app-info` 查询。
 
 `agcctl publish list-versions` 用 `versionCode` 核对这次正式版本。
 

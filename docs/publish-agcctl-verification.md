@@ -1,6 +1,6 @@
 # PUBLISH 场景 agcctl 验证对照
 
-`doctor` 通过之后，按下面的主线逐条验证命令。每次只跑一个 `agcctl` 操作，把响应里的外部 ID 记下来再跑下一条。查询命令可以重复执行。创建、提交、停止、删除和转全网在结果未知时不要原样重放。
+`doctor` 通过之后，按下面的主线逐条验证命令。每次只跑一个 `agcctl` 操作，把响应里的外部 ID 记下来再跑下一条。查询命令可以重复执行。创建、提交、撤销审核、停止、删除和转全网在结果未知时不要原样重放。
 
 当前本机 `config.yaml` 指向正式应用「牵手」。这次本地验证已经完成上传、测试版本、正式关联、语言更新、真实提审和提审后停止。`publish promote-full` 没有执行。不要用同一份请求再次 `publish submit`，也不要转全网。请求文件和外部 ID 见 `docs/publish-agcctl-local-guide.md`。测试应用验收项见 `docs/agc-test-app-poc.md`。
 
@@ -31,6 +31,7 @@
 | 提交审核 | 正式提审。可先 `--dry-run`，只校验不发送 | `publish submit` | `POST /api/publish/v3/app-submit` |
 | 提交审核后 | 提审被接受后停止 AppTest。先查询；`releaseState` 为 `2` 或 `10`，或 HTTP 404 时不再停止。已删除版本返回 HTTP 200 业务错误时命令失败 | `test stop-version` | 先 `GET /api/publish/v3/app-info`，再 `POST /api/publish/v2/test/version/stop` |
 | 审核中 / 上架或灰度 | 按正式 `publishVersionId` 查审核、上架和灰度 | `publish get-app-info` | `GET /api/publish/v3/app-info` |
+| 撤销审核 | 全网发布处于审核中、预审中、升级审核中、待上架/预约上架或申请下架时撤销。请求只传正式 `publishVersionId`。这次验证不调用 | `publish cancel-review` | `PUT /api/publish/v3/version/on-shelf/cancel`，Body 为 `versionId` |
 | 审核中 / 上架或灰度 | 用 `versionCode` 核对本次正式版本。相同版本码的测试版本不计入候选 | `publish list-versions` | `POST /api/publish/v3/version/brief-info/list` |
 | 对账正式包 | 结果未知时查正式包信息。`appId` 放请求头，查询参数只有 `packageId` | `publish get-package-info` | `GET /api/publish/v2/app-package-info` |
 | 创建 PR、合入、tag | 平台 GitHub 适配器。不调用 `agcctl` | 无 | 无 |

@@ -13,6 +13,7 @@ from agc_cli.auth import build_jwt
 from agc_cli.config import Settings
 from agc_cli.doctor import _load_account
 from agc_cli.errors import CommandError, ExitCode
+from agc_cli.ret_codes import ret_failure
 
 _MUTATING = {"POST", "PUT", "DELETE"}
 
@@ -106,7 +107,8 @@ def classify(method: str, exchange: Exchange) -> CommandError | None:
         return CommandError(ExitCode.NON_RETRYABLE, "HTTP_UNEXPECTED", f"华为接口返回 HTTP {status}")
     ret = exchange.body.get("ret")
     if isinstance(ret, dict) and ret.get("code") not in (None, 0):
-        return CommandError(ExitCode.NON_RETRYABLE, "AGC_RET_ERROR", "华为接口返回业务错误")
+        message, detail = ret_failure(ret.get("code"), ret.get("msg"))
+        return CommandError(ExitCode.NON_RETRYABLE, "AGC_RET_ERROR", message, detail)
     return None
 
 
