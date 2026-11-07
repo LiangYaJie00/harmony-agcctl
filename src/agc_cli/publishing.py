@@ -230,16 +230,16 @@ def _version_code_matches(item: dict[str, Any], version_code: Any) -> bool:
 
 
 def _from_app_info(exchange) -> dict[str, Any]:
-    app_info = exchange.body.get("appInfo") if isinstance(exchange.body.get("appInfo"), dict) else {}
+    body = exchange.body if isinstance(exchange.body, dict) else {}
+    app_info = body.get("appInfo") if isinstance(body.get("appInfo"), dict) else {}
     remote = {
         "releaseState": app_info.get("releaseState"),
         "releasePhase": app_info.get("releasePhase"),
     }
     data: dict[str, Any] = {}
-    phase = app_info.get("phasedReleaseInfo")
-    if isinstance(phase, dict):
-        remote["phasedReleaseInfo"] = phase
-        _attach_phase(app_info, remote, data)
+    # 查询应用信息把 phasedReleaseInfo 放在响应根上，与 appInfo 同级。
+    phase_source = body if isinstance(body.get("phasedReleaseInfo"), dict) else app_info
+    _attach_phase(phase_source, remote, data)
     version_id = app_info.get("versionId")
     external = {"publishVersionId": version_id} if isinstance(version_id, str) and version_id else {}
     return _ok(exchange, external, remote, data)

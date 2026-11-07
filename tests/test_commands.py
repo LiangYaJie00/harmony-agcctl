@@ -663,6 +663,38 @@ def test_get_app_info_maps_phase_percent(tmp_path, capsys) -> None:
         [
             _json_response(
                 200,
+                {
+                    "ret": {"code": 0},
+                    "appInfo": {"versionId": "pub-1", "releaseState": 0},
+                    "phasedReleaseInfo": {
+                        "state": "SUSPEND",
+                        "description": "****",
+                        "releaseTime": 1748591413000,
+                        "latestSuspendTime": 1748933392000,
+                        "totalSuspendDays": 1,
+                        "currentPhaseDay": 5,
+                    },
+                },
+            )
+        ]
+    )
+    code, response, _stderr, _transport = _run(
+        tmp_path,
+        capsys,
+        ["publish", "get-app-info"],
+        transport,
+        _request("PUBLISH_APP_INFO", {"publishVersionId": "pub-1"}),
+    )
+    assert code == ExitCode.SUCCESS
+    assert response["remoteState"]["phasedReleaseInfo"]["currentPhaseDay"] == 5
+    assert response["data"]["phasePercent"] == 20
+
+
+def test_get_app_info_maps_nested_phase_percent(tmp_path, capsys) -> None:
+    transport = ScriptedTransport(
+        [
+            _json_response(
+                200,
                 {"ret": {"code": 0}, "appInfo": {"versionId": "pub-1", "releaseState": 0, "phasedReleaseInfo": {"currentPhaseDay": 1}}},
             )
         ]
