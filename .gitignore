@@ -10,3 +10,6 @@ private.json
 *.private.json
 config.yaml
 .DS_Store
+.gocache/
+bin/
+*.test

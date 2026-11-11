@@ -6,18 +6,22 @@
 
 ## 下载和安装
 
-需要 Python 3.11。仓库地址是 `git@github.com:LiangYaJie00/harmony-agcctl.git`。
+需要 Go 1.23 或更高版本。仓库地址是 `git@github.com:LiangYaJie00/harmony-agcctl.git`。
 
 ```bash
 git clone git@github.com:LiangYaJie00/harmony-agcctl.git
 cd harmony-agcctl
-python3.11 -m venv .venv
-.venv/bin/pip install -r requirements.lock
-.venv/bin/pip install -e .
-.venv/bin/agcctl --version
+make build
+./bin/agcctl --version
 ```
 
-安装完成后用 `.venv/bin/agcctl` 调用。下文的 `agcctl` 都是指这个命令。
+也可以直接构建：
+
+```bash
+go build -trimpath -o bin/agcctl ./cmd/agcctl
+```
+
+安装完成后用 `./bin/agcctl` 调用。下文的 `agcctl` 都是指这个命令，也可以把 `bin/agcctl` 放到 `PATH` 中。
 
 `private.json` 和本机的 `config.yaml` 不在仓库里。复制示例后再填写：
 
@@ -168,14 +172,16 @@ agcctl publish submit --dry-run --config config.yaml --request-file submit.json
 ## 开发
 
 ```bash
-.venv/bin/pip install -e '.[dev]'
-.venv/bin/pytest
+make test
+make vet
 ```
+
+Go 入口在 `cmd/agcctl`，命令编排在 `internal/cli`，华为接口实现按上传、测试版本和正式发布拆分。原 Python 实现保留在 `src/agc_cli` 作为迁移对照，不再作为发布入口。
 
 ## 离线包
 
 ```bash
-.venv/bin/python scripts/build_offline_package.py
+make dist
 ```
 
-产物在 `dist/`，包含源码包、`MANIFEST.json` 和整包 SHA-256。目标机器解压后仍按上面的虚拟环境步骤安装。测试应用验收清单见 [docs/agc-test-app-poc.md](docs/agc-test-app-poc.md)。
+产物在 `dist/`，包含 Linux amd64 单文件二进制、配置示例、`MANIFEST.json` 和整包 SHA-256。目标机器解压后直接运行 `./agcctl`，不需要安装 Go 或 Python。测试应用验收清单见 [docs/agc-test-app-poc.md](docs/agc-test-app-poc.md)。

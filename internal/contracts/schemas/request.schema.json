@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://qianshou.local/agcctl/request.schema.json",
+  "title": "agcctl request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "taskId",
+    "operationKey",
+    "toolVersion",
+    "appId",
+    "request"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "taskId": { "type": "string", "minLength": 1 },
+    "operationKey": { "type": "string", "minLength": 1 },
+    "toolVersion": { "type": "string", "minLength": 1 },
+    "appId": { "type": "string", "minLength": 1 },
+    "request": { "type": "object" },
+    "context": { "type": "object" }
+  }
+}
